@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-import matplotlib.pyplot as plt
-import numpy as np
 
 def display_images_with_text(images, texts, num_columns=5, figsize=(12, 3)):
     """
@@ -17,6 +15,7 @@ def display_images_with_text(images, texts, num_columns=5, figsize=(12, 3)):
 
     This method was provided by ChatGPT (https://github.com/ChatGPT)
     """
+
     # Function to display image and add text above it
     def display_image_with_text(image, text, ax):
         ax.imshow(image)
@@ -48,18 +47,31 @@ def display_images_with_text(images, texts, num_columns=5, figsize=(12, 3)):
     plt.show()
 
 
-
-def get_image(xtr, batch_id, image_id):
+def get_image(batch, image_id):
     try:
-        batch = xtr[batch_id]
         images = batch[b'data']
         image = images[image_id]
         image_reshaped = np.array(image).reshape(3, 32, 32).transpose(1, 2, 0)  # transpose changes RGB to GBR
         return image_reshaped
     except IndexError:
-        print(f"Access Error in Batch {batch_id}, id {image_id}")
+        print(f"Access Error in Batch {batch}, id {image_id}")
         return None
 
+def get_label(batch, image_id):
+    label = batch[b'labels'][image_id]
+    return label
+
+def get_all_vectors(xtr):
+    all_images = []
+    try:
+        for batch in xtr:
+            images = batch[b'data']
+            for image_vector in images:
+                all_images.append(np.array(image_vector).reshape(3, 32, 32).transpose(1, 2, 0))
+        return all_images
+    except IndexError:
+        print("batch_index or image_index not correct")
+        return None
 
 def show_image(image):
     # Visualize the image
@@ -81,15 +93,16 @@ def load_data(learn_url, test_url):
     return xtr, y
 
 
-def k_nearest_neighbor(xtr, test_image, k=1):
-    # Find the k nearest neighbours from xtr to the test_image
+def k_nearest_neighbor(all_images, test_image, k=1):
     distances = []
-    for i, train_batch in enumerate(xtr):
-        for train_image in train_batch[b'data']:
-            distances.append((distance_l1(test_image, train_image)))
-    distances.sort()
-    neighbors = distances[:k]  # Select only the lowest 'k' neighbours
-    return neighbors
+    for current_image in all_images:
+        print(current_image)
+        distance = distance_l1(test_image, current_image)
+        distances.append(distance)
+
+    sorted_indices = np.argsort(distances)
+    k_nearest_indices = sorted_indices[:k]
+    return k_nearest_indices
 
 
 def distance_l1(image1, image2):
@@ -100,14 +113,45 @@ def distance_l2(image1, image2):
     return np.sum(np.square(image1 - image2))
 
 
-
 # How to get label:
 # batch 1 , image 0
 # Xtr[1][b'labels'][0]
 #
 #
 
+
+def get_all_labels(xtr):
+    all_labels = []
+    try:
+        for x in range(0, len(xtr)):
+            batch = xtr[x]
+            labels = batch[b'labels']
+
+            for image_vector in labels:
+                all_labels.append(image_vector)
+        return all_labels
+
+    except IndexError:
+        print("batch_index or image_index not correct")
+        return None
+
+
 if __name__ == '__main__':
     xtr, y = load_data("cifar-10-batches-py/data_batch_", "cifar-10-batches-py/test_batch")
-    image = get_image(xtr, 0, 0)
-    # show_image(image)
+    # image = get_image(xtr, 0, 0)
+    data_vectors = get_all_vectors(xtr)
+    data_images = [get_image(vector, i) for i, vector in enumerate(data_vectors)]
+    show_image(data_images[5])
+    data_labels = get_all_labels(xtr)
+    for i in range(0, 10):
+        image = get_image(y, i)
+        label_orig = get_label(y, i)
+        nearest_indices = k_nearest_neighbor(data_images, image, k=10)
+        predicted_labels = []
+        # for j in nearest_indices:
+        # get_label(xtr[0], j)
+        prediction = 0
+        # images.append({'image': image, 'label': label_orig, 'prediction': prediction})
+
+    display_images_with_text(images, ["textstexts"] * len(images))
+
