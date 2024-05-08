@@ -29,7 +29,7 @@ def create_xtr_image_dictionary(xtr):
         for i in range(len(batch[b'filenames'])):
             filename = batch[b'filenames'][i].decode('utf-8')
             label = batch[b'labels'][i]
-            image_data = batch[b'data'][i]
+            image_data = reshape_image([b'data'][i])
             image_id = id_counter
             image_dict[image_id] = {'label': label, 'data': image_data}
             id_counter += 1
@@ -40,8 +40,19 @@ def create_image_dictionary_from_y(y):
     image_dict = {}
     for i, label in enumerate(y[b'labels']):
         image_id = i + 1
-        image_dict[image_id] = {'label': label, 'data': y[b'data'][i]}
+        image_dict[image_id] = {'label': label, 'data': reshape_image([b'data'][i])}
     return image_dict
+
+def reshape_image(image):
+    return np.array(image).reshape(3, 32, 32).transpose(1, 2, 0)  # transpose changes RGB to GBR
+
+
+def calculate_nearest_neighbour(test_image, xtr_dict, k):
+    distances = []
+    for i in range(0,len(xtr_dict)):
+        current_image = xtr_dict[i]['data']
+        distance = distance_l1(test_image, current_image)
+        distances.append(distance)
 
 
 learn_url = "cifar-10-batches-py/data_batch_"

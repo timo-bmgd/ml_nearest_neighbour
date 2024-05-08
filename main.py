@@ -112,6 +112,12 @@ def distance_l1(image1, image2):
 def distance_l2(image1, image2):
     return np.sum(np.square(image1 - image2))
 
+def create_data_list(xtr):
+    data_list = []
+    for batch, labels in xtr:
+        data_set = {'labels': labels, 'data': batch[b'data'], 'filenames': batch[b'filenames']}
+        data_list.append(data_set)
+    return data_list
 
 # How to get label:
 # batch 1 , image 0
@@ -138,20 +144,7 @@ def get_all_labels(xtr):
 
 if __name__ == '__main__':
     xtr, y = load_data("cifar-10-batches-py/data_batch_", "cifar-10-batches-py/test_batch")
-    # image = get_image(xtr, 0, 0)
-    data_vectors = get_all_vectors(xtr)
-    data_images = [get_image(vector, i) for i, vector in enumerate(data_vectors)]
-    show_image(data_images[5])
-    data_labels = get_all_labels(xtr)
-    for i in range(0, 10):
-        image = get_image(y, i)
-        label_orig = get_label(y, i)
-        nearest_indices = k_nearest_neighbor(data_images, image, k=10)
-        predicted_labels = []
-        # for j in nearest_indices:
-        # get_label(xtr[0], j)
-        prediction = 0
-        # images.append({'image': image, 'label': label_orig, 'prediction': prediction})
-
-    display_images_with_text(images, ["textstexts"] * len(images))
+    # Now get all the vectors in a list
+    xtr_vectors = xtr[0]
+    print(xtr_vectors)
 
